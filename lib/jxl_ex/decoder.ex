@@ -8,10 +8,10 @@ defmodule JxlEx.Decoder do
   @container <<0, 0, 0, 0xC, 74, 88, 76, 32, 0xD, 0xA, 0x87, 0xA>>
   @codestream <<0xFF, 0x0A>>
 
-  def new, do: Base.dec_create()
+  def new(num_threads \\ 0), do: Base.dec_create(num_threads)
 
-  def new! do
-    case new() do
+  def new!(num_threads \\ 0) do
+    case new(num_threads) do
       {:ok, dec} -> dec
       {:error, err} -> raise err
       err -> raise "Unkown error: #{inspect(err)}"
@@ -28,7 +28,12 @@ defmodule JxlEx.Decoder do
     end
   end
 
-  def basic_info(handle), do: Base.dec_basic_info(handle)
+  def basic_info(handle) do
+    case Base.dec_basic_info(handle) do
+      {:ok, info} -> {:ok, JxlEx.JxlBasicInfo.from(info)}
+      err -> err
+    end
+  end
 
   def basic_info!(handle) do
     case basic_info(handle) do

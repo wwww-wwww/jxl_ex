@@ -41,7 +41,7 @@ static int upgrade(ErlNifEnv* env, void** priv_data, void** old_priv_data,
 };
 
 static ErlNifFunc jxl_nif_funcs[] = {
-    {"dec_create", 0, dec_create_nif, 0},
+    {"dec_create", 1, dec_create_nif, 0},
     {"dec_load_blob", 2, dec_load_data_nif, 0},
     {"dec_basic_info", 1, dec_basic_info_nif, 0},
     {"dec_icc_profile", 1, dec_icc_profile_nif, 0},
@@ -79,6 +79,14 @@ struct jxl_dec_resource_t {
 
 static ERL_NIF_TERM dec_create_nif(ErlNifEnv* env, int argc,
                                    const ERL_NIF_TERM argv[]) {
+  int num_threads;
+  if (enif_get_int(env, argv[0], &num_threads) == 0) {
+    return ERROR(env, "Invalid thread count");
+  }
+  if (num_threads < 0) {
+    return ERROR(env, "Invalid thread count");
+  }
+
   ErlNifResourceType* type = (ErlNifResourceType*)enif_priv_data(env);
   jxl_dec_resource_t* resource = (jxl_dec_resource_t*)enif_alloc_resource(
       type, sizeof(jxl_dec_resource_t));
@@ -88,9 +96,12 @@ static ERL_NIF_TERM dec_create_nif(ErlNifEnv* env, int argc,
     return ERROR(env, "Failed to create resource");
   }
 
+  if (num_threads == 0) {
+    num_threads = (int)JxlThreadParallelRunnerDefaultNumWorkerThreads();
+  }
+
   auto dec = JxlDecoderMake(nullptr);
-  auto runner = JxlThreadParallelRunnerMake(
-      nullptr, JxlThreadParallelRunnerDefaultNumWorkerThreads());
+  auto runner = JxlThreadParallelRunnerMake(nullptr, num_threads);
 
   if (JXL_DEC_SUCCESS !=
       JxlDecoderSubscribeEvents(dec.get(),
@@ -183,6 +194,8 @@ static ERL_NIF_TERM dec_basic_info_nif(ErlNifEnv* env, int argc,
 
 have_info:
   ERL_NIF_TERM map = enif_make_new_map(env);
+  MAP(env, map, "have_container",
+      enif_make_int(env, resource->jxl_info.have_container));
   MAP(env, map, "xsize", enif_make_uint(env, resource->jxl_info.xsize));
   MAP(env, map, "ysize", enif_make_uint(env, resource->jxl_info.ysize));
   MAP(env, map, "bits_per_sample",

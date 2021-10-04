@@ -33,7 +33,7 @@ defmodule JxlEx.Base do
     end)
   end
 
-  def dec_create(), do: fail()
+  def dec_create(_num_threads), do: fail()
   def dec_load_blob(_handle, _data), do: fail()
   def dec_basic_info(_handle), do: fail()
   def dec_icc_profile(_handle), do: fail()
