@@ -10,7 +10,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY $ENV{MIX_COMPILE_PATH}/../priv)
 include(FetchContent)
 add_subdirectory(libjxl)
 
-add_library(jxl_ex_nif cpp_src/jxl_nif.cpp)
+add_library(jxl_ex_nif cpp_src/jxl_nif.cpp cpp_src/jxl_dec_nif.cpp)
 target_link_libraries(jxl_ex_nif jxl_dec-static jxl_threads-static)
 target_include_directories(jxl_ex_nif PRIVATE
   ${libjxl_BINARY_DIR}
