@@ -1,8 +1,6 @@
 FetchContent_Declare(libjxl
   GIT_REPOSITORY  https://github.com/libjxl/libjxl
-  GIT_TAG         c31dca74e68f6d1550692a2e28780499fa4e7dd5
-  PATCH_COMMAND   git apply
-    ${CMAKE_CURRENT_LIST_DIR}/01-skcms-directory.patch || true
+  GIT_TAG         8917d6afbcd98e29f85e81c0e8596f94a5c1d4aa
   BINARY_DIR      build
   SUBBUILD_DIR    subbuild
 )
