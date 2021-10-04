@@ -33,6 +33,8 @@ static ERL_NIF_TERM rgb8_to_gray8_nif(ErlNifEnv* env, int argc,
                                       const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM add_alpha8_nif(ErlNifEnv* env, int argc,
                                    const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM premultiply_alpha8_nif(ErlNifEnv* env, int argc,
+                                           const ERL_NIF_TERM argv[]);
 
 static int nif_load(ErlNifEnv* env, void** data, const ERL_NIF_TERM info);
 static int upgrade(ErlNifEnv* env, void** priv_data, void** old_priv_data,
@@ -53,6 +55,7 @@ static ErlNifFunc jxl_nif_funcs[] = {
     {"gray8_to_rgb8", 2, gray8_to_rgb8_nif, 0},
     {"rgb8_to_gray8", 2, rgb8_to_gray8_nif, 0},
     {"add_alpha8", 2, add_alpha8_nif, 0},
+    {"premultiply_alpha8", 2, premultiply_alpha8_nif, 0},
 };
 
 ERL_NIF_INIT(Elixir.JxlEx.Base, jxl_nif_funcs, nif_load, NULL, upgrade, NULL)
@@ -589,6 +592,55 @@ static ERL_NIF_TERM add_alpha8_nif(ErlNifEnv* env, int argc,
   for (size_t i = 0; i < num_pixels; i++) {
     memcpy(pixels.data() + i * new_stride, original.data + i * stride, stride);
     pixels[i * new_stride + stride] = 0xFF;
+  }
+
+  ERL_NIF_TERM map = enif_make_new_map(env);
+
+  ERL_NIF_TERM data;
+  unsigned char* raw = enif_make_new_binary(env, pixels.size(), &data);
+  memcpy(raw, pixels.data(), pixels.size());
+
+  MAP(env, map, "image", data);
+  MAP(env, map, "num_channels", enif_make_uint(env, new_stride));
+
+  return OK(env, map);
+}
+
+static ERL_NIF_TERM premultiply_alpha8_nif(ErlNifEnv* env, int argc,
+                                           const ERL_NIF_TERM argv[]) {
+  ErlNifBinary original;
+  if (enif_inspect_binary(env, argv[0], &original) == 0) {
+    return ERROR(env, "Bad argument");
+  }
+
+  int stride;
+  if (enif_get_int(env, argv[1], &stride) == 0) {
+    return ERROR(env, "Invalid stride");
+  }
+
+  if (stride == 1 || stride == 3) {
+    return OK(env, argv[0]);
+  }
+
+  int new_stride = stride - 1;
+
+  std::vector<uint8_t> pixels(original.size * new_stride);
+
+  size_t num_pixels = original.size / stride;
+
+  for (int i = 0; i < num_pixels; i++) {
+    uint8_t alpha = original.data[i * stride + stride - 1];
+    if (alpha == 0) {
+      memset(pixels.data() + i * new_stride, 0, new_stride);
+    } else if (alpha == 255) {
+      memcpy(pixels.data() + i * new_stride, original.data + i * stride,
+             new_stride);
+    } else {
+      for (int j = 0; j < stride; j++) {
+        pixels[i * new_stride + j] =
+            (uint8_t)(alpha / 255.0 * original.data[i * stride + j]);
+      }
+    }
   }
 
   ERL_NIF_TERM map = enif_make_new_map(env);

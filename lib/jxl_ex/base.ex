@@ -46,6 +46,7 @@ defmodule JxlEx.Base do
   def gray8_to_rgb8(_data, _have_alpha), do: fail()
   def rgb8_to_gray8(_data, _have_alpha), do: fail()
   def add_alpha8(_data, _stride), do: fail()
+  def premultiply_alpha8(_data, _stride), do: fail()
 
   defp fail, do: raise("native function error")
 end

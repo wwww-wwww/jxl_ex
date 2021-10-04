@@ -7,7 +7,7 @@ defmodule JxlEx.Image do
     struct(%__MODULE__{}, image)
   end
 
-  def gray8_to_rgb8(image) do
+  def gray_to_rgb(image) do
     if image.num_channels >= 3 do
       {:ok, image}
     else
@@ -27,15 +27,15 @@ defmodule JxlEx.Image do
     end
   end
 
-  def gray8_to_rgb8!(image) do
-    case gray8_to_rgb8(image) do
+  def gray_to_rgb!(image) do
+    case gray_to_rgb(image) do
       {:ok, im} -> im
       {:error, err} -> raise err
       err -> raise "Unkown error: #{inspect(err)}"
     end
   end
 
-  def rgb8_to_gray8(image) do
+  def rgb_to_gray(image) do
     if image.num_channels < 3 do
       {:ok, image}
     else
@@ -55,8 +55,8 @@ defmodule JxlEx.Image do
     end
   end
 
-  def rgb8_to_gray8!(image) do
-    case rgb8_to_gray8(image) do
+  def rgb_to_gray!(image) do
+    case rgb_to_gray(image) do
       {:ok, im} -> im
       {:error, err} -> raise err
       err -> raise "Unkown error: #{inspect(err)}"
@@ -78,6 +78,27 @@ defmodule JxlEx.Image do
 
   def add_alpha!(image) do
     case add_alpha(image) do
+      {:ok, dec} -> dec
+      {:error, err} -> raise err
+      err -> raise "Unkown error: #{inspect(err)}"
+    end
+  end
+
+  def premultiply_alpha(image) do
+    case Base.premultiply_alpha8(image.image, image.num_channels) do
+      {:ok, new_image} ->
+        {:ok,
+         Map.from_struct(image)
+         |> Map.merge(new_image)
+         |> from()}
+
+      err ->
+        err
+    end
+  end
+
+  def premultiply_alpha!(image) do
+    case premultiply_alpha(image) do
       {:ok, dec} -> dec
       {:error, err} -> raise err
       err -> raise "Unkown error: #{inspect(err)}"
