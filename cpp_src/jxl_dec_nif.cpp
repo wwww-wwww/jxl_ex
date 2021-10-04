@@ -1,5 +1,12 @@
 #include "jxl_dec_nif.h"
 
+void release(jxl_dec_resource_t* resource) {
+  size_t remaining = JxlDecoderReleaseInput(resource->decoder.get());
+  size_t front = resource->remaining_data.size() - remaining;
+  resource->remaining_data.erase(resource->remaining_data.begin(),
+                                 resource->remaining_data.begin() + front);
+}
+
 ERL_NIF_TERM dec_create_nif(ErlNifEnv* env, int argc,
                             const ERL_NIF_TERM argv[]) {
   int num_threads;
@@ -62,7 +69,13 @@ ERL_NIF_TERM dec_load_data_nif(ErlNifEnv* env, int argc,
     return ERROR(env, "Bad argument");
   }
 
-  JxlDecoderSetInput(resource->decoder.get(), blob.data, blob.size);
+  resource->remaining_data.insert(resource->remaining_data.end(), blob.data,
+                                  blob.data + blob.size);
+
+  if (!resource->remaining_data.empty()) {
+    JxlDecoderSetInput(resource->decoder.get(), resource->remaining_data.data(),
+                       resource->remaining_data.size());
+  }
 
   return OK(env, argv[0]);
 }
@@ -82,17 +95,18 @@ ERL_NIF_TERM dec_basic_info_nif(ErlNifEnv* env, int argc,
       if (status == JXL_DEC_ERROR) {
         return ERROR(env, "Decode error");
       } else if (status == JXL_DEC_NEED_MORE_INPUT) {
+        release(resource);
         return ERROR(env, "Need more input");
       } else if (status == JXL_DEC_BASIC_INFO) {
         if (JXL_DEC_SUCCESS != JxlDecoderGetBasicInfo(resource->decoder.get(),
                                                       &resource->jxl_info)) {
           return ERROR(env, "JxlDecoderGetBasicInfo failed");
         }
-        int num_channels = resource->jxl_info.num_color_channels +
-                           (resource->jxl_info.alpha_bits > 0 ? 1 : 0);
-        resource->format = {4, JXL_TYPE_UINT8, JXL_LITTLE_ENDIAN, 0};
+        uint32_t num_channels = resource->jxl_info.num_color_channels +
+                                (resource->jxl_info.alpha_bits > 0 ? 1 : 0);
+        resource->format = {num_channels, JXL_TYPE_UINT8, JXL_LITTLE_ENDIAN, 0};
         resource->have_info = true;
-        goto have_info;
+        break;
       } else if (status == JXL_DEC_COLOR_ENCODING) {
         size_t size = 0;
         if (JXL_DEC_SUCCESS != JxlDecoderGetICCProfileSize(
@@ -115,7 +129,6 @@ ERL_NIF_TERM dec_basic_info_nif(ErlNifEnv* env, int argc,
     }
   }
 
-have_info:
   ERL_NIF_TERM map = enif_make_new_map(env);
   MAP(env, map, "have_container",
       enif_make_int(env, resource->jxl_info.have_container));
@@ -166,6 +179,8 @@ have_info:
         enif_make_uint(env, resource->jxl_info.animation.tps_numerator));
     MAP(env, animation, "tps_denominator",
         enif_make_uint(env, resource->jxl_info.animation.tps_denominator));
+    MAP(env, animation, "num_loops",
+        enif_make_uint(env, resource->jxl_info.animation.num_loops));
     MAP(env, animation, "have_timecodes",
         enif_make_int(env, resource->jxl_info.animation.have_timecodes));
     MAP(env, map, "animation", animation);
@@ -189,6 +204,7 @@ ERL_NIF_TERM dec_icc_profile_nif(ErlNifEnv* env, int argc,
       if (status == JXL_DEC_ERROR) {
         return ERROR(env, "Decode error");
       } else if (status == JXL_DEC_NEED_MORE_INPUT) {
+        release(resource);
         return ERROR(env, "Need more input");
       } else if (status == JXL_DEC_BASIC_INFO) {
         if (JXL_DEC_SUCCESS != JxlDecoderGetBasicInfo(resource->decoder.get(),
@@ -215,14 +231,13 @@ ERL_NIF_TERM dec_icc_profile_nif(ErlNifEnv* env, int argc,
           return ERROR(env, "JxlDecoderGetColorAsICCProfile failed");
         }
         resource->have_icc = true;
-        goto have_icc;
+        break;
       } else {
         return ERROR(env, "Unexpected decoder status");
       }
     }
   }
 
-have_icc:
   ERL_NIF_TERM data;
   unsigned char* raw =
       enif_make_new_binary(env, resource->icc_profile.size(), &data);
@@ -248,6 +263,7 @@ ERL_NIF_TERM dec_frame_nif(ErlNifEnv* env, int argc,
     if (status == JXL_DEC_ERROR) {
       return ERROR(env, "Decode error");
     } else if (status == JXL_DEC_NEED_MORE_INPUT) {
+      release(resource);
       return ERROR(env, "Need more input");
     } else if (status == JXL_DEC_BASIC_INFO) {
       if (JXL_DEC_SUCCESS != JxlDecoderGetBasicInfo(resource->decoder.get(),
@@ -295,15 +311,14 @@ ERL_NIF_TERM dec_frame_nif(ErlNifEnv* env, int argc,
         return ERROR(env, "JxlDecoderSetImageOutBuffer failed");
       }
     } else if (status == JXL_DEC_FULL_IMAGE) {
-      goto done;
+      break;
     } else if (status == JXL_DEC_SUCCESS) {
-      goto done;
+      break;
     } else {
       return ERROR(env, "Unexpected decoder status");
     }
   }
 
-done:
   if (pixels.empty()) {
     return ERROR(env, "No image");
   }
@@ -323,9 +338,11 @@ done:
       enif_make_uint(env, resource->format.num_channels));
 
   if (resource->jxl_info.have_animation) {
-    MAP(env, map, "duration", enif_make_uint(env, frame_header.duration));
-    MAP(env, map, "timecode", enif_make_uint(env, frame_header.timecode));
-    MAP(env, map, "is_last", enif_make_int(env, frame_header.is_last));
+    ERL_NIF_TERM animation = enif_make_new_map(env);
+    MAP(env, animation, "duration", enif_make_uint(env, frame_header.duration));
+    MAP(env, animation, "timecode", enif_make_uint(env, frame_header.timecode));
+    MAP(env, animation, "is_last", enif_make_int(env, frame_header.is_last));
+    MAP(env, map, "animation", animation);
   }
 
   return OK(env, map);

@@ -15,6 +15,7 @@ struct jxl_dec_resource_t {
   std::vector<uint8_t> icc_profile;
   bool have_info = false;
   bool have_icc = false;
+  std::vector<uint8_t> remaining_data;
 };
 
 ERL_NIF_TERM dec_create_nif(ErlNifEnv* env, int argc,
