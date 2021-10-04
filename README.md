@@ -2,7 +2,7 @@
 libjxl wrapper NIF for Elixir
 
 ## Basic Usage
-```
+```elixir
 {:ok, f} = File.read("image.jxl")
 im =
   JxlEx.Decoder.new!()
@@ -10,7 +10,7 @@ im =
   |> JxlEx.Decoder.next!()
 ```
 
-```
+```elixir
 {:ok, dec} =
   JxlEx.Decoder.new!()
   |> JxlEx.Decoder.load(f)
@@ -20,11 +20,11 @@ im =
 {:ok, im} = JxlEx.Decoder.next(dec)
 ```
 
-```
+```elixir
 > JxlEx.Decoder.new!()
   |> JxlEx.Decoder.load!(f)
   |> JxlEx.Decoder.next!()
-  |> JxlEx.Image.rgb8_to_gray8!()
+  |> JxlEx.Image.rgb_to_gray!()
   |> JxlEx.Image.add_alpha!()
 %JxlEx.Image{
   animation: nil,
@@ -36,6 +36,59 @@ im =
   xsize: 1131,
   ysize: 1600
 }
+```
+
+Transcoding to png using [yuce/png](https://github.com/yuce/png)
+```elixir
+{:ok, f} = File.read("image.jxl")
+
+im =
+  JxlEx.Decoder.new!()
+  |> JxlEx.Decoder.load!(f)
+  |> JxlEx.Decoder.next!()
+
+mode =
+  case im.num_channels do
+    1 -> :grayscale
+    2 -> :grayscale_alpha
+    3 -> :rgb
+    4 -> :rgba
+  end
+
+config = {:png_config, {im.xsize, im.ysize}, {mode, 8}, 0, 0, 0}
+
+xstride = im.xsize * im.num_channels * 8
+
+rows = for <<chunk::size(xstride) <- im.image>>, do: <<chunk::size(xstride)>>
+
+rows =
+:png.chunk(:IDAT, {:rows, rows})
+|> Enum.reduce(<<>>, fn x, acc -> acc <> x end)
+
+png_data =
+[:png.header(), :png.chunk(:IHDR, config), rows, :png.chunk(:IEND)]
+|> Enum.reduce(<<>>, fn x, acc -> acc <> x end)
+
+{:ok, f} = File.open("out.png", [:write])
+IO.binwrite(f, png_data)
+File.close(f)
+```
+
+Transcoding to jpeg using [BinaryNoggin/elixir-turbojpeg](https://github.com/BinaryNoggin/elixir-turbojpeg)
+```elixir
+im =
+  JxlEx.Decoder.new!()
+  |> JxlEx.Decoder.load!(File.read!("image.jxl"))
+  |> JxlEx.Decoder.next!()
+  |> JxlEx.Image.gray_to_rgb!()
+  |> JxlEx.Image.premultiply_alpha!()
+  |> JxlEx.Image.rgb_to_ycbcr!()
+
+# this may have issues for heights % 4 != 0
+{:ok, jpeg} = Turbojpeg.yuv_to_jpeg(im.image, im.xsize, im.ysize, 90, :I444)
+{:ok, file} = File.open("out.jpg", [:write])
+IO.binwrite(file, jpeg)
+File.close(file)
 ```
 
 ## Installation
@@ -53,4 +106,3 @@ end
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/jxl_ex](https://hexdocs.pm/jxl_ex).
-
