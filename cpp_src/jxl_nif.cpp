@@ -35,6 +35,8 @@ static ERL_NIF_TERM add_alpha8_nif(ErlNifEnv* env, int argc,
                                    const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM premultiply_alpha8_nif(ErlNifEnv* env, int argc,
                                            const ERL_NIF_TERM argv[]);
+static ERL_NIF_TERM rgb8_to_ycbcr_nif(ErlNifEnv* env, int argc,
+                                      const ERL_NIF_TERM argv[]);
 
 static int nif_load(ErlNifEnv* env, void** data, const ERL_NIF_TERM info);
 static int upgrade(ErlNifEnv* env, void** priv_data, void** old_priv_data,
@@ -56,6 +58,7 @@ static ErlNifFunc jxl_nif_funcs[] = {
     {"rgb8_to_gray8", 2, rgb8_to_gray8_nif, 0},
     {"add_alpha8", 2, add_alpha8_nif, 0},
     {"premultiply_alpha8", 2, premultiply_alpha8_nif, 0},
+    {"rgb8_to_ycbcr", 1, rgb8_to_ycbcr_nif, 0},
 };
 
 ERL_NIF_INIT(Elixir.JxlEx.Base, jxl_nif_funcs, nif_load, NULL, upgrade, NULL)
@@ -581,7 +584,12 @@ static ERL_NIF_TERM add_alpha8_nif(ErlNifEnv* env, int argc,
   }
 
   if (stride == 2 || stride == 4) {
-    return OK(env, argv[0]);
+    ERL_NIF_TERM map = enif_make_new_map(env);
+
+    MAP(env, map, "image", argv[0]);
+    MAP(env, map, "num_channels", argv[1]);
+
+    return OK(env, map);
   }
 
   size_t num_pixels = original.size / stride;
@@ -619,7 +627,12 @@ static ERL_NIF_TERM premultiply_alpha8_nif(ErlNifEnv* env, int argc,
   }
 
   if (stride == 1 || stride == 3) {
-    return OK(env, argv[0]);
+    ERL_NIF_TERM map = enif_make_new_map(env);
+
+    MAP(env, map, "image", argv[0]);
+    MAP(env, map, "num_channels", argv[1]);
+
+    return OK(env, map);
   }
 
   int new_stride = stride - 1;
@@ -651,6 +664,42 @@ static ERL_NIF_TERM premultiply_alpha8_nif(ErlNifEnv* env, int argc,
 
   MAP(env, map, "image", data);
   MAP(env, map, "num_channels", enif_make_uint(env, new_stride));
+
+  return OK(env, map);
+}
+
+static ERL_NIF_TERM rgb8_to_ycbcr_nif(ErlNifEnv* env, int argc,
+                                      const ERL_NIF_TERM argv[]) {
+  ErlNifBinary original;
+  if (enif_inspect_binary(env, argv[0], &original) == 0) {
+    return ERROR(env, "Bad argument");
+  }
+
+  size_t num_pixels = original.size / 3;
+
+  std::vector<uint8_t> y(num_pixels);
+  std::vector<uint8_t> cb(num_pixels);
+  std::vector<uint8_t> cr(num_pixels);
+
+  for (int i = 0; i < num_pixels; i++) {
+    float r = (float)original.data[i * 3 + 0];
+    float g = (float)original.data[i * 3 + 1];
+    float b = (float)original.data[i * 3 + 2];
+    y[i] = (uint8_t)(0.299 * r + 0.587 * g + 0.114 * b);
+    cb[i] = (uint8_t)(128 - 0.168736 * r - 0.331264 * g + 0.5 * b);
+    cr[i] = (uint8_t)(128 + 0.5 * r - 0.418688 * g - 0.081312 * b);
+  }
+
+  ERL_NIF_TERM map = enif_make_new_map(env);
+
+  ERL_NIF_TERM data;
+  unsigned char* raw = enif_make_new_binary(env, original.size, &data);
+  memcpy(raw, y.data(), y.size());
+  memcpy(raw + y.size(), cb.data(), cb.size());
+  memcpy(raw + y.size() + cb.size(), cr.data(), cr.size());
+
+  MAP(env, map, "image", data);
+  MAP(env, map, "num_channels", enif_make_uint(env, 3));
 
   return OK(env, map);
 }
