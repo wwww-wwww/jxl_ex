@@ -15,8 +15,9 @@ defmodule JxlEx.Base do
       :ok ->
         :ok
 
-      _ ->
+      err ->
         raise """
+        #{inspect(err)}
         An error occurred when loading jxl_ex.
         Make sure you have a C compiler and Erlang 20 installed.
         """
@@ -25,10 +26,10 @@ defmodule JxlEx.Base do
 
   defp load_nif() do
     [@make_default, @msvc_release, @msvc_debug]
-    |> Enum.reduce_while(0, fn x, _acc ->
+    |> Enum.reduce_while([], fn x, acc ->
       case :erlang.load_nif(x, 0) do
         :ok -> {:halt, :ok}
-        err -> {:cont, err}
+        err -> {:cont, acc ++ [err]}
       end
     end)
   end
