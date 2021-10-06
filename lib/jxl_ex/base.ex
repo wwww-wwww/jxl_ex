@@ -6,9 +6,15 @@ defmodule JxlEx.Base do
   @compile {:autoload, false}
   @on_load {:init, 0}
 
-  @msvc_debug :filename.join(:code.priv_dir(:jxl_ex), 'Debug/jxl_ex_nif')
-  @msvc_release :filename.join(:code.priv_dir(:jxl_ex), 'Release/jxl_ex_nif')
-  @make_default :filename.join(:code.priv_dir(:jxl_ex), 'libjxl_ex_nif')
+  @priv_paths [
+    :code.priv_dir(:jxl_ex),
+    '_build/prod/lib/jxl_ex/priv/',
+    '_build/dev/lib/jxl_ex/priv/'
+  ]
+
+  @make_default 'libjxl_ex_nif'
+  @msvc_debug 'Debug/jxl_ex_nif'
+  @msvc_release 'Release/jxl_ex_nif'
 
   def init do
     case load_nif() do
@@ -26,6 +32,8 @@ defmodule JxlEx.Base do
 
   defp load_nif() do
     [@make_default, @msvc_release, @msvc_debug]
+    |> Enum.map(fn x -> Enum.map(@priv_paths, fn y -> :filename.join(y, x) end) end)
+    |> Enum.reduce([], fn x, acc -> acc ++ x end)
     |> Enum.reduce_while([], fn x, acc ->
       case :erlang.load_nif(x, 0) do
         :ok -> {:halt, :ok}
