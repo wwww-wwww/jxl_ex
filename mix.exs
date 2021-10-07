@@ -11,7 +11,7 @@ defmodule JxlEx.MixProject do
     [
       app: :jxl_ex,
       version: "0.1.0",
-      elixir: "~> 1.12",
+      elixir: "~> 1.11",
       compilers: [:cmake] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       description: @description,
