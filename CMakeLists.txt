@@ -56,6 +56,7 @@ target_link_libraries(jxl_ex_nif
 
 target_include_directories(jxl_ex_nif PRIVATE
   $ENV{ERTS_INCLUDE_DIR}
+  ${LIBJXL_BINARY_DIR}
   ${LIBJXL_SOURCE_DIR}
   $<TARGET_PROPERTY:hwy,INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:lcms2,INCLUDE_DIRECTORIES>
