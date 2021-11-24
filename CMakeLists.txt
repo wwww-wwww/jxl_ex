@@ -44,11 +44,11 @@ add_library(jxl_ex_nif SHARED
 )
 
 target_link_libraries(jxl_ex_nif
-  jxl_dec
-  jxl_threads
-  brotlidec
-  brotlienc
-  brotlicommon
+  jxl_dec-static
+  jxl_threads-static
+  brotlidec-static
+  brotlienc-static
+  brotlicommon-static
   lcms2
   hwy
   -Wl,--allow-multiple-definition
@@ -56,7 +56,6 @@ target_link_libraries(jxl_ex_nif
 
 target_include_directories(jxl_ex_nif PRIVATE
   $ENV{ERTS_INCLUDE_DIR}
-  ${LIBJXL_BINARY_DIR}
   ${LIBJXL_SOURCE_DIR}
   $<TARGET_PROPERTY:hwy,INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:lcms2,INCLUDE_DIRECTORIES>
