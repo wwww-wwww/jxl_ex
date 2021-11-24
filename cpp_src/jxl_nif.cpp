@@ -1,5 +1,6 @@
 #include "jxl_nif.h"
 #include "jxl_dec_nif.h"
+#include "jxl_enc_nif.h"
 
 static void nif_destroy(ErlNifEnv* env, void* obj) {
   jxl_dec_resource_t* resource = (jxl_dec_resource_t*)obj;
@@ -37,6 +38,7 @@ static ErlNifFunc jxl_nif_funcs[] = {
     {"add_alpha8", 2, add_alpha8_nif, 0},
     {"premultiply_alpha8", 2, premultiply_alpha8_nif, 0},
     {"rgb8_to_ycbcr", 1, rgb8_to_ycbcr_nif, 0},
+    {"jxl_from_tree", 1, jxl_from_tree_nif, ERL_NIF_DIRTY_JOB_CPU_BOUND},
 };
 
 ERL_NIF_INIT(Elixir.JxlEx.Base, jxl_nif_funcs, nif_load, NULL, upgrade, NULL)

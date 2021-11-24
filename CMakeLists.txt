@@ -19,15 +19,44 @@ set(JPEGXL_ENABLE_JNI OFF CACHE INTERNAL
     "Build JPEGXL JNI Java wrapper, if Java dependencies are installed.")
 set(JPEGXL_ENABLE_OPENEXR OFF CACHE INTERNAL
     "Build JPEGXL with support for OpenEXR if available.")
+set(JPEGXL_ENABLE_SKCMS OFF CACHE INTERNAL
+    "Build with skcms instead of lcms2.")
+set(JPEGXL_BUNDLE_SKCMS OFF CACHE INTERNAL
+    "When building with skcms, bundle it into libjxl.a.")
 
 option(BUILD_TESTING "" OFF)
 
-add_subdirectory(libjxl)
+add_subdirectory(libjxl EXCLUDE_FROM_ALL)
 
-add_library(jxl_ex_nif cpp_src/jxl_nif.cpp cpp_src/jxl_dec_nif.cpp)
-target_link_libraries(jxl_ex_nif jxl_dec-static jxl_threads-static)
+get_target_property(JPEGXL_INTERNAL_SOURCES_DEC jxl_dec-obj SOURCES)
+get_target_property(JPEGXL_INTERNAL_SOURCES_ENC jxl_enc-obj SOURCES)
+set(JPEGXL_INTERNAL_SOURCES ${JPEGXL_INTERNAL_SOURCES_DEC} ${JPEGXL_INTERNAL_SOURCES_ENC})
+list(REMOVE_ITEM JPEGXL_INTERNAL_SOURCES jxl/encode.cc)
+list(REMOVE_ITEM JPEGXL_INTERNAL_SOURCES jxl/decode.cc)
+list(REMOVE_DUPLICATES JPEGXL_INTERNAL_SOURCES)
+list(TRANSFORM JPEGXL_INTERNAL_SOURCES PREPEND ${LIBJXL_SOURCE_DIR}/lib/)
+
+add_library(jxl_ex_nif SHARED
+  cpp_src/jxl_nif.cpp
+  cpp_src/jxl_dec_nif.cpp
+  cpp_src/jxl_enc_nif.cpp
+  ${JPEGXL_INTERNAL_SOURCES}
+)
+
+target_link_libraries(jxl_ex_nif
+  jxl_dec
+  jxl_threads
+  brotlidec
+  brotlienc
+  brotlicommon
+  lcms2
+  hwy
+  -Wl,--allow-multiple-definition
+)
+
 target_include_directories(jxl_ex_nif PRIVATE
-  ${libjxl_BINARY_DIR}
-  ${libjxl_SOURCE_DIR}
   $ENV{ERTS_INCLUDE_DIR}
+  ${LIBJXL_SOURCE_DIR}
+  $<TARGET_PROPERTY:hwy,INCLUDE_DIRECTORIES>
+  $<TARGET_PROPERTY:lcms2,INCLUDE_DIRECTORIES>
 )
