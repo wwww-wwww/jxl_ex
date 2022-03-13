@@ -92,19 +92,19 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     int p;
     t = tok();
     if (!property_map.count(t)) {
-      fprintf(stderr, "Unexpected property: %s\n", t.c_str());
+      std::cerr << "Unexpected property: " << t.c_str() << std::endl;
       return false;
     }
     p = property_map.at(t);
     if ((t = tok()) != ">") {
-      fprintf(stderr, "Expected >, found %s\n", t.c_str());
+      std::cerr << "Expected >, found: " << t.c_str() << std::endl;
       return false;
     }
     t = tok();
     size_t num = 0;
     int split = std::stoi(t, &num);
     if (num != t.size()) {
-      fprintf(stderr, "Invalid splitval: %s\n", t.c_str());
+      std::cerr << "Invalid splitval: " << t.c_str() << std::endl;
       return false;
     }
     size_t pos = tree.size();
@@ -117,7 +117,7 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     t = tok();
     Predictor p;
     if (!predictor_map.count(t)) {
-      fprintf(stderr, "Unexpected predictor: %s\n", t.c_str());
+      std::cerr << "Unexpected predictor: " << t.c_str() << std::endl;
       return false;
     }
     p = predictor_map.at(t);
@@ -132,7 +132,7 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     size_t num = 0;
     int offset = std::stoi(t, &num);
     if (num != t.size()) {
-      fprintf(stderr, "Invalid offset: %s\n", t.c_str());
+      std::cerr << "Invalid offset: " << t.c_str() << std::endl;
       return false;
     }
     if (subtract) offset = -offset;
@@ -143,7 +143,7 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     size_t num = 0;
     W = std::stoul(t, &num);
     if (num != t.size()) {
-      fprintf(stderr, "Invalid width: %s\n", t.c_str());
+      std::cerr << "Invalid width: " << t.c_str() << std::endl;
       return false;
     }
   } else if (t == "Height") {
@@ -151,7 +151,7 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     size_t num = 0;
     H = std::stoul(t, &num);
     if (num != t.size()) {
-      fprintf(stderr, "Invalid height: %s\n", t.c_str());
+      std::cerr << "Invalid height: " << t.c_str() << std::endl;
       return false;
     }
   } else if (t == "/*") {
@@ -164,7 +164,7 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     size_t num = 0;
     cparams.modular_group_size_shift = std::stoul(t, &num);
     if (num != t.size()) {
-      fprintf(stderr, "Invalid GroupShift: %s\n", t.c_str());
+      std::cerr << "Invalid GroupShift: " << t.c_str() << std::endl;
       return false;
     }
   } else if (t == "XYB") {
@@ -176,7 +176,7 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     size_t num = 0;
     cparams.colorspace = std::stoul(t, &num);
     if (num != t.size()) {
-      fprintf(stderr, "Invalid RCT: %s\n", t.c_str());
+      std::cerr << "Invalid RCT: " << t.c_str() << std::endl;
       return false;
     }
   } else if (t == "Orientation") {
@@ -184,7 +184,7 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     size_t num = 0;
     io.metadata.m.orientation = std::stoul(t, &num);
     if (num != t.size()) {
-      fprintf(stderr, "Invalid Orientation: %s\n", t.c_str());
+      std::cerr << "Invalid Orientation: " << t.c_str() << std::endl;
       return false;
     }
   } else if (t == "Alpha") {
@@ -196,7 +196,7 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     size_t num = 0;
     io.metadata.m.bit_depth.bits_per_sample = std::stoul(t, &num);
     if (num != t.size()) {
-      fprintf(stderr, "Invalid Bitdepth: %s\n", t.c_str());
+      std::cerr << "Invalid Bitdepth: " << t.c_str() << std::endl;
       return false;
     }
   } else if (t == "FloatExpBits") {
@@ -205,7 +205,7 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     io.metadata.m.bit_depth.floating_point_sample = true;
     io.metadata.m.bit_depth.exponent_bits_per_sample = std::stoul(t, &num);
     if (num != t.size()) {
-      fprintf(stderr, "Invalid FloatExpBits: %s\n", t.c_str());
+      std::cerr << "Invalid FloatExpBits: " << t.c_str() << std::endl;
       return false;
     }
   } else if (t == "FramePos") {
@@ -213,13 +213,13 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     size_t num = 0;
     x0 = std::stoi(t, &num);
     if (num != t.size()) {
-      fprintf(stderr, "Invalid FramePos x0: %s\n", t.c_str());
+      std::cerr << "Invalid FramePos x0: " << t.c_str() << std::endl;
       return false;
     }
     t = tok();
     y0 = std::stoi(t, &num);
     if (num != t.size()) {
-      fprintf(stderr, "Invalid FramePos y0: %s\n", t.c_str());
+      std::cerr << "Invalid FramePos y0: " << t.c_str() << std::endl;
       return false;
     }
   } else if (t == "NotLast") {
@@ -231,7 +231,7 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     if (num != t.size() ||
         (cparams.resampling != 1 && cparams.resampling != 2 &&
          cparams.resampling != 4 && cparams.resampling != 8)) {
-      fprintf(stderr, "Invalid Upsample: %s\n", t.c_str());
+      std::cerr << "Invalid Upsample: " << t.c_str() << std::endl;
       return false;
     }
   } else if (t == "Upsample_EC") {
@@ -241,7 +241,7 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     if (num != t.size() ||
         (cparams.ec_resampling != 1 && cparams.ec_resampling != 2 &&
          cparams.ec_resampling != 4 && cparams.ec_resampling != 8)) {
-      fprintf(stderr, "Invalid Upsample_EC: %s\n", t.c_str());
+      std::cerr << "Invalid Upsample_EC: " << t.c_str() << std::endl;
       return false;
     }
   } else if (t == "Animation") {
@@ -254,14 +254,14 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     size_t num = 0;
     io.metadata.m.animation.tps_numerator = std::stoul(t, &num);
     if (num != t.size()) {
-      fprintf(stderr, "Invalid numerator: %s\n", t.c_str());
+      std::cerr << "Invalid numerator: " << t.c_str() << std::endl;
       return false;
     }
     t = tok();
     num = 0;
     io.metadata.m.animation.tps_denominator = std::stoul(t, &num);
     if (num != t.size()) {
-      fprintf(stderr, "Invalid denominator: %s\n", t.c_str());
+      std::cerr << "Invalid denominator: " << t.c_str() << std::endl;
       return false;
     }
   } else if (t == "Duration") {
@@ -269,7 +269,7 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     size_t num = 0;
     io.frames[0].duration = std::stoul(t, &num);
     if (num != t.size()) {
-      fprintf(stderr, "Invalid Duration: %s\n", t.c_str());
+      std::cerr << "Invalid Duration: " << t.c_str() << std::endl;
       return false;
     }
   } else if (t == "BlendMode") {
@@ -285,7 +285,7 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     } else if (t == "kMul") {
       io.frames[0].blendmode = BlendMode::kMul;
     } else {
-      fprintf(stderr, "Invalid BlendMode: %s\n", t.c_str());
+      std::cerr << "Invalid BlendMode: " << t.c_str() << std::endl;
       return false;
     }
   } else if (t == "SplineQuantizationAdjustment") {
@@ -293,7 +293,8 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     size_t num = 0;
     spline_data.quantization_adjustment = std::stoul(t, &num);
     if (num != t.size()) {
-      fprintf(stderr, "Invalid SplineQuantizationAdjustment: %s\n", t.c_str());
+      std::cerr << "Invalid SplineQuantizationAdjustment: " << t.c_str()
+                << std::endl;
       return false;
     }
   } else if (t == "Spline") {
@@ -303,7 +304,7 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
       size_t num = 0;
       output = std::stof(t, &num);
       if (num != t.size()) {
-        fprintf(stderr, "Invalid spline data: %s\n", t.c_str());
+        std::cerr << "Invalid spline data: " << t.c_str() << std::endl;
         return false;
       }
       return true;
@@ -327,15 +328,15 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
       auto t_y = tok();
       point.y = std::stof(t_y, &num);
       if (!ok_x || num != t_y.size()) {
-        fprintf(stderr, "Invalid spline control point: %s %s\n", t.c_str(),
-                t_y.c_str());
+        std::cerr << "Invalid spline control point: " << t.c_str() << " "
+                  << t_y.c_str() << std::endl;
         return false;
       }
       spline.control_points.push_back(point);
     }
 
     if (spline.control_points.empty()) {
-      fprintf(stderr, "Spline with no control point\n");
+      std::cerr << "Spline with no control point" << std::endl;
       return false;
     }
 
@@ -347,11 +348,11 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     size_t num = 0;
     cparams.epf = std::stoul(t, &num);
     if (num != t.size() || cparams.epf > 3) {
-      fprintf(stderr, "Invalid EPF: %s\n", t.c_str());
+      std::cerr << "Invalid EPF: " << t.c_str() << std::endl;
       return false;
     }
   } else {
-    fprintf(stderr, "Unexpected node type: %s\n", t.c_str());
+    std::cerr << "Unexpected node type: " << t.c_str() << std::endl;
     return false;
   }
   JXL_RETURN_IF_ERROR(
@@ -474,9 +475,24 @@ ERL_NIF_TERM jxl_from_tree_nif(ErlNifEnv* env, int argc,
 
   std::vector<char> out;
 
-  if (jxl::JxlFromTree(in, out, NULL)) {
-    return ERROR(env, "JxlFromTree error");
+  std::stringstream buffer;
+  std::streambuf* old = std::cerr.rdbuf(buffer.rdbuf());
+
+  try {
+    if (jxl::JxlFromTree(in, out, NULL)) {
+      std::string text = buffer.str();
+      std::cerr.rdbuf(old);
+      return ERROR(env, text.c_str());
+    }
+  } catch (const std::exception& e) {
+    std::cerr << e.what();
+
+    std::string text = buffer.str();
+    std::cerr.rdbuf(old);
+    return ERROR(env, text.c_str());
   }
+
+  std::cerr.rdbuf(old);
 
   ERL_NIF_TERM data;
   unsigned char* raw = enif_make_new_binary(env, out.size(), &data);
