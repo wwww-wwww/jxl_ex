@@ -163,7 +163,7 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     t = tok();
     size_t num = 0;
     cparams.modular_group_size_shift = std::stoul(t, &num);
-    if (num != t.size()) {
+    if (num != t.size() || cparams.modular_group_size_shift > 3) {
       std::cerr << "Invalid GroupShift: " << t.c_str() << std::endl;
       return false;
     }
@@ -195,7 +195,8 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     t = tok();
     size_t num = 0;
     io.metadata.m.bit_depth.bits_per_sample = std::stoul(t, &num);
-    if (num != t.size()) {
+    if (num != t.size() || io.metadata.m.bit_depth.bits_per_sample == 0 ||
+        io.metadata.m.bit_depth.bits_per_sample > 31) {
       std::cerr << "Invalid Bitdepth: " << t.c_str() << std::endl;
       return false;
     }
@@ -204,7 +205,9 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     size_t num = 0;
     io.metadata.m.bit_depth.floating_point_sample = true;
     io.metadata.m.bit_depth.exponent_bits_per_sample = std::stoul(t, &num);
-    if (num != t.size()) {
+    if (num != t.size() ||
+        io.metadata.m.bit_depth.exponent_bits_per_sample <= 1 ||
+        io.metadata.m.bit_depth.exponent_bits_per_sample > 8) {
       std::cerr << "Invalid FloatExpBits: " << t.c_str() << std::endl;
       return false;
     }
