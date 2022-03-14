@@ -201,16 +201,8 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
       return false;
     }
   } else if (t == "FloatExpBits") {
-    t = tok();
-    size_t num = 0;
-    io.metadata.m.bit_depth.floating_point_sample = true;
-    io.metadata.m.bit_depth.exponent_bits_per_sample = std::stoul(t, &num);
-    if (num != t.size() ||
-        io.metadata.m.bit_depth.exponent_bits_per_sample <= 1 ||
-        io.metadata.m.bit_depth.exponent_bits_per_sample > 8) {
-      std::cerr << "Invalid FloatExpBits: " << t.c_str() << std::endl;
-      return false;
-    }
+    std::cerr << "FloatExpBits not supported" << std::endl;
+    return false;
   } else if (t == "FramePos") {
     t = tok();
     size_t num = 0;
