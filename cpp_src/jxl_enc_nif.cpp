@@ -7,6 +7,7 @@
 
 #include "lib/jxl/base/file_io.h"
 #include "lib/jxl/enc_cache.h"
+#include "lib/jxl/enc_color_management.h"
 #include "lib/jxl/enc_file.h"
 #include "lib/jxl/enc_frame.h"
 #include "lib/jxl/enc_heuristics.h"
@@ -201,8 +202,14 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
       return false;
     }
   } else if (t == "FloatExpBits") {
-    std::cerr << "FloatExpBits not supported" << std::endl;
-    return false;
+    t = tok();
+    size_t num = 0;
+    io.metadata.m.bit_depth.floating_point_sample = true;
+    io.metadata.m.bit_depth.exponent_bits_per_sample = std::stoul(t, &num);
+    if (num != t.size()) {
+      std::cerr << "Invalid FloatExpBits: " << t.c_str() << std::endl;
+      return false;
+    }
   } else if (t == "FramePos") {
     t = tok();
     size_t num = 0;
@@ -338,6 +345,9 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     spline_data.splines.push_back(std::move(spline));
   } else if (t == "Gaborish") {
     cparams.gaborish = jxl::Override::kOn;
+  } else if (t == "DeltaPalette") {
+    cparams.lossy_palette = true;
+    cparams.palette_colors = 0;
   } else if (t == "EPF") {
     t = tok();
     size_t num = 0;
@@ -345,6 +355,28 @@ bool ParseNode(F& tok, Tree& tree, SplineData& spline_data,
     if (num != t.size() || cparams.epf > 3) {
       std::cerr << "Invalid EPF: " << t.c_str() << std::endl;
       return false;
+    }
+  } else if (t == "Noise") {
+    cparams.manual_noise.resize(8);
+    for (size_t i = 0; i < 8; i++) {
+      t = tok();
+      size_t num = 0;
+      cparams.manual_noise[i] = std::stof(t, &num);
+      if (num != t.size()) {
+        std::cerr << "Invalid noise entry: " << t.c_str() << std::endl;
+        return false;
+      }
+    }
+  } else if (t == "XYBFactors") {
+    cparams.manual_xyb_factors.resize(3);
+    for (size_t i = 0; i < 3; i++) {
+      t = tok();
+      size_t num = 0;
+      cparams.manual_xyb_factors[i] = std::stof(t, &num);
+      if (num != t.size()) {
+        std::cerr << "Invalid XYB factor: " << t.c_str() << std::endl;
+        return false;
+      }
     }
   } else {
     std::cerr << "Unexpected node type: " << t.c_str() << std::endl;
@@ -377,7 +409,9 @@ int JxlFromTree(std::istream& in, std::vector<char>& out,
   CompressParams cparams = {};
   size_t width = 1024, height = 1024;
   int x0 = 0, y0 = 0;
-  cparams.color_transform = ColorTransform::kNone;
+  cparams.SetLossless();
+  cparams.resampling = 1;
+  cparams.ec_resampling = 1;
   cparams.modular_group_size_shift = 3;
   CodecInOut io;
   int have_next = 0;
@@ -401,7 +435,6 @@ int JxlFromTree(std::istream& in, std::vector<char>& out,
              (height + y0) * cparams.resampling);
   io.metadata.m.color_encoding.DecideIfWantICC();
   cparams.options.zero_tokens = true;
-  cparams.modular_mode = true;
   cparams.palette_colors = 0;
   cparams.channel_colors_pre_transform_percent = 0;
   cparams.channel_colors_percent = 0;
@@ -435,7 +468,8 @@ int JxlFromTree(std::istream& in, std::vector<char>& out,
     io.frames[0].origin.y0 = y0;
 
     JXL_RETURN_IF_ERROR(EncodeFrame(cparams, info, metadata.get(), io.frames[0],
-                                    &enc_state, nullptr, &writer, nullptr));
+                                    &enc_state, GetJxlCms(), nullptr, &writer,
+                                    nullptr));
     if (!have_next) break;
     tree.clear();
     spline_data.splines.clear();
