@@ -115,4 +115,33 @@ defmodule JxlEx.Decoder do
       _ -> false
     end
   end
+
+  def decode_all_frames(dec) do
+    case next(dec) do
+      {:ok, %{animation: %{is_last: 0}} = im} -> [im] ++ decode_all_frames(dec)
+      {:ok, im} -> [im]
+      _ -> []
+    end
+  end
+
+  def decode(data, num_threads \\ 0) do
+    case new(num_threads) do
+      {:ok, dec} ->
+        case load(dec, data) do
+          {:ok, _} -> {:ok, {basic_info!(dec), decode_all_frames(dec)}}
+          err -> err
+        end
+
+      err ->
+        err
+    end
+  end
+
+  def decode!(data, num_threads \\ 0) do
+    case decode(data, num_threads) do
+      {:ok, ret} -> ret
+      {:error, err} -> raise err
+      err -> raise "Unkown error: #{inspect(err)}"
+    end
+  end
 end
