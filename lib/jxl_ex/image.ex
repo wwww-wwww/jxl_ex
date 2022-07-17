@@ -1,7 +1,7 @@
 defmodule JxlEx.Image do
   alias JxlEx.Base
 
-  defstruct [:image, :xsize, :ysize, :num_channels, :animation]
+  defstruct [:image, :xsize, :ysize, :num_channels, :animation, :bits_per_sample]
 
   def from(image) do
     struct(%__MODULE__{}, image)
