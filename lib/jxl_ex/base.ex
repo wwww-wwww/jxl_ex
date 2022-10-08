@@ -6,6 +6,8 @@ defmodule JxlEx.Base do
   @compile {:autoload, false}
   @on_load {:init, 0}
 
+  @env Mix.env()
+
   @priv_path_dev '_build/dev/lib/jxl_ex/priv/'
   @priv_path_prod '_build/prod/lib/jxl_ex/priv/'
 
@@ -29,7 +31,7 @@ defmodule JxlEx.Base do
 
   defp load_nif() do
     priv_paths =
-      if Mix.env() == :dev do
+      if @env == :dev do
         [:code.priv_dir(:jxl_ex), @priv_path_dev]
       else
         [:code.priv_dir(:jxl_ex), @priv_path_prod]
@@ -37,7 +39,7 @@ defmodule JxlEx.Base do
 
     [@make_default, @msvc_release, @msvc_debug]
     |> Enum.map(fn x -> Enum.map(priv_paths, fn y -> :filename.join(y, x) end) end)
-    |> Enum.reduce([], fn x, acc -> acc ++ x end)
+    |> Enum.reduce([], &(&2 ++ &1))
     |> Enum.reduce_while([], fn x, acc ->
       case :erlang.load_nif(x, 0) do
         :ok -> {:halt, :ok}
@@ -55,8 +57,6 @@ defmodule JxlEx.Base do
   def dec_reset(_handle), do: fail()
   def dec_rewind(_handle), do: fail()
   def dec_skip(_handle, _frames), do: fail()
-
-  def jxl_from_tree(_tree), do: fail()
 
   def gray8_to_rgb8(_data, _have_alpha), do: fail()
   def rgb8_to_gray8(_data, _have_alpha), do: fail()

@@ -1,3 +1,4 @@
 %{
-  "elixir_cmake": {:git, "https://github.com/wwww-wwww/elixir-cmake.git", "122e900bd94a2c3ac4b86dc83f074ea31e2b2f9c", []},
+  "elixir_cmake": {:git, "https://github.com/wwww-wwww/elixir-cmake.git", "dfd3143ef430329f714780723cc8e1a88aec0b7f", []},
+  "rambo": {:hex, :rambo, "0.3.4", "8962ac3bd1a633ee9d0e8b44373c7913e3ce3d875b4151dcd060886092d2dce7", [:mix], [], "hexpm", "0cc54ed089fbbc84b65f4b8a774224ebfe60e5c80186fafc7910b3e379ad58f1"},
 }

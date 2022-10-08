@@ -31,7 +31,8 @@ defmodule JxlEx.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:elixir_cmake, github: "wwww-wwww/elixir-cmake"}
+      {:elixir_cmake, github: "wwww-wwww/elixir-cmake"},
+      {:rambo, "~> 0.3"}
     ]
   end
 
