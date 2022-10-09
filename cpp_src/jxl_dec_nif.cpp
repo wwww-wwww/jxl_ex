@@ -275,6 +275,15 @@ ERL_NIF_TERM dec_frame_nif(ErlNifEnv* env, int argc,
       resource->format = {num_channels, JXL_TYPE_UINT8, JXL_LITTLE_ENDIAN, 0};
       resource->have_info = true;
     } else if (status == JXL_DEC_COLOR_ENCODING) {
+      JxlColorEncoding color_encoding;
+      color_encoding.color_space = JXL_COLOR_SPACE_RGB;
+      color_encoding.white_point = JXL_WHITE_POINT_D65;
+      color_encoding.primaries = JXL_PRIMARIES_SRGB;
+      color_encoding.transfer_function = JXL_TRANSFER_FUNCTION_SRGB;
+      color_encoding.rendering_intent = JXL_RENDERING_INTENT_PERCEPTUAL;
+      JxlDecoderSetPreferredColorProfile(resource->decoder.get(),
+                                         &color_encoding);
+
       size_t size = 0;
       if (JXL_DEC_SUCCESS != JxlDecoderGetICCProfileSize(
                                  resource->decoder.get(), &resource->format,
