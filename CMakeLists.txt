@@ -47,6 +47,7 @@ add_library(jxl_ex_nif SHARED
 target_link_libraries(jxl_ex_nif
   jxl_dec
   jxl_threads
+  jxl-internal
   brotlidec
   brotlienc
   brotlicommon
@@ -67,7 +68,7 @@ target_link_libraries(jxl_from_tree
   brotlienc
   jxl_cms
   jxl_dec
-  jxl_enc-obj
+  jxl-internal
   jxl_threads
   jxl_tool
   -Wl,--allow-multiple-definition
