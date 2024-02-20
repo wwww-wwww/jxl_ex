@@ -24,6 +24,7 @@ set(JPEGXL_ENABLE_SKCMS OFF CACHE INTERNAL
 set(JPEGXL_BUNDLE_SKCMS OFF CACHE INTERNAL
   "When building with skcms, bundle it into libjxl.a.")
 set(JPEGXL_ENABLE_DEVTOOLS OFF CACHE INTERNAL "")
+set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
 
 option(BUILD_TESTING "" OFF)
 
@@ -44,11 +45,11 @@ add_library(jxl_ex_nif SHARED
 )
 
 target_link_libraries(jxl_ex_nif
-  jxl_dec-static
-  jxl_threads-static
-  brotlidec-static
-  brotlienc-static
-  brotlicommon-static
+  jxl_dec
+  jxl_threads
+  brotlidec
+  brotlienc
+  brotlicommon
   lcms2
   hwy
   -Wl,--allow-multiple-definition
@@ -63,9 +64,11 @@ target_include_directories(jxl_ex_nif PRIVATE
 
 add_executable(jxl_from_tree ${LIBJXL_SOURCE_DIR}/tools/jxl_from_tree.cc ${JPEGXL_INTERNAL_SOURCES})
 target_link_libraries(jxl_from_tree
-  jxl_dec-static
-  brotlienc-static
-  lcms2
+  brotlienc
+  jxl_cms
+  jxl_dec
+  jxl_enc-obj
+  jxl_threads
   jxl_tool
   -Wl,--allow-multiple-definition
 )

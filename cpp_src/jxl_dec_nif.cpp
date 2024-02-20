@@ -109,15 +109,15 @@ ERL_NIF_TERM dec_basic_info_nif(ErlNifEnv* env, int argc,
         break;
       } else if (status == JXL_DEC_COLOR_ENCODING) {
         size_t size = 0;
-        if (JXL_DEC_SUCCESS != JxlDecoderGetICCProfileSize(
-                                   resource->decoder.get(), &resource->format,
-                                   JXL_COLOR_PROFILE_TARGET_DATA, &size)) {
+        if (JXL_DEC_SUCCESS !=
+            JxlDecoderGetICCProfileSize(resource->decoder.get(),
+                                        JXL_COLOR_PROFILE_TARGET_DATA, &size)) {
           return ERROR(env, "JxlDecoderGetICCProfileSize failed");
         }
 
         resource->icc_profile.resize(size);
         if (JXL_DEC_SUCCESS != JxlDecoderGetColorAsICCProfile(
-                                   resource->decoder.get(), &resource->format,
+                                   resource->decoder.get(),
                                    JXL_COLOR_PROFILE_TARGET_DATA,
                                    resource->icc_profile.data(), size)) {
           return ERROR(env, "JxlDecoderGetColorAsICCProfile failed");
@@ -217,15 +217,15 @@ ERL_NIF_TERM dec_icc_profile_nif(ErlNifEnv* env, int argc,
         resource->have_info = true;
       } else if (status == JXL_DEC_COLOR_ENCODING) {
         size_t size = 0;
-        if (JXL_DEC_SUCCESS != JxlDecoderGetICCProfileSize(
-                                   resource->decoder.get(), &resource->format,
-                                   JXL_COLOR_PROFILE_TARGET_DATA, &size)) {
+        if (JXL_DEC_SUCCESS !=
+            JxlDecoderGetICCProfileSize(resource->decoder.get(),
+                                        JXL_COLOR_PROFILE_TARGET_DATA, &size)) {
           return ERROR(env, "JxlDecoderGetICCProfileSize failed");
         }
 
         resource->icc_profile.resize(size);
         if (JXL_DEC_SUCCESS != JxlDecoderGetColorAsICCProfile(
-                                   resource->decoder.get(), &resource->format,
+                                   resource->decoder.get(),
                                    JXL_COLOR_PROFILE_TARGET_DATA,
                                    resource->icc_profile.data(), size)) {
           return ERROR(env, "JxlDecoderGetColorAsICCProfile failed");
@@ -285,17 +285,17 @@ ERL_NIF_TERM dec_frame_nif(ErlNifEnv* env, int argc,
                                          &color_encoding);
 
       size_t size = 0;
-      if (JXL_DEC_SUCCESS != JxlDecoderGetICCProfileSize(
-                                 resource->decoder.get(), &resource->format,
-                                 JXL_COLOR_PROFILE_TARGET_DATA, &size)) {
+      if (JXL_DEC_SUCCESS !=
+          JxlDecoderGetICCProfileSize(resource->decoder.get(),
+                                      JXL_COLOR_PROFILE_TARGET_DATA, &size)) {
         return ERROR(env, "JxlDecoderGetICCProfileSize failed");
       }
 
       resource->icc_profile.resize(size);
-      if (JXL_DEC_SUCCESS != JxlDecoderGetColorAsICCProfile(
-                                 resource->decoder.get(), &resource->format,
-                                 JXL_COLOR_PROFILE_TARGET_DATA,
-                                 resource->icc_profile.data(), size)) {
+      if (JXL_DEC_SUCCESS !=
+          JxlDecoderGetColorAsICCProfile(resource->decoder.get(),
+                                         JXL_COLOR_PROFILE_TARGET_DATA,
+                                         resource->icc_profile.data(), size)) {
         return ERROR(env, "JxlDecoderGetColorAsICCProfile failed");
       }
       resource->have_icc = true;
